@@ -1,5 +1,20 @@
 {
   "names": {
     "niels": "1e78f481f707b2bb7978aaf8cacdc48b43bfebb81d21ee365664bb2c06b723d3"
-  }
+  },
+  "relays": [
+    "wss://nos.lol",
+    "wss://nostr.bitcoiner.social",
+    "wss://nostr.fmt.wiz.biz",
+    "wss://nostr.mom",
+    "wss://nostr.oxtr.dev",
+    "wss://nostr.wine",
+    "wss://offchain.pub",
+    "wss://relay.damus.io",
+    "wss://relay.nostr.bg",
+    "wss://relay.nostrati.com",
+    "wss://relay.noswhere.com",
+    "wss://relay.plebstr.com",
+    "wss://you.nostr1.com"
+  ]
 }
