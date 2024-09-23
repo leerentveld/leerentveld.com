@@ -11,10 +11,7 @@
     "wss://nostr.wine",
     "wss://offchain.pub",
     "wss://relay.damus.io",
-    "wss://relay.nostr.bg",
     "wss://relay.nostrati.com",
-    "wss://relay.noswhere.com",
-    "wss://relay.plebstr.com",
     "wss://you.nostr1.com"
   ]
 }
