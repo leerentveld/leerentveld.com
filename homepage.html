@@ -87,21 +87,74 @@
 
         async function redirectToLatestItem() {
             try {
-                const response = await fetch(CORS_PROXY + encodeURIComponent(RSS_URL));
-                const xmlText = await response.text();
+                // Probeer verschillende CORS proxies
+                const proxies = [
+                    'https://api.allorigins.win/raw?url=',
+                    'https://corsproxy.io/?',
+                    'https://api.codetabs.com/v1/proxy?quest='
+                ];
+                
+                let xmlText = null;
+                let lastError = null;
+                
+                for (const proxy of proxies) {
+                    try {
+                        console.log(`Proberen met proxy: ${proxy}`);
+                        const response = await fetch(proxy + encodeURIComponent(RSS_URL));
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        
+                        xmlText = await response.text();
+                        console.log('XML ontvangen:', xmlText.substring(0, 200) + '...');
+                        break;
+                    } catch (proxyError) {
+                        console.log(`Proxy ${proxy} mislukt:`, proxyError);
+                        lastError = proxyError;
+                        continue;
+                    }
+                }
+                
+                if (!xmlText) {
+                    throw new Error(`Alle proxies mislukt. Laatste fout: ${lastError?.message}`);
+                }
                 
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
                 
-                const items = xmlDoc.querySelectorAll('item');
-                
-                if (items.length === 0) {
-                    throw new Error('Geen items gevonden in RSS feed');
+                // Check voor parse errors
+                const parserError = xmlDoc.querySelector('parsererror');
+                if (parserError) {
+                    throw new Error('XML parse fout: ' + parserError.textContent);
                 }
                 
-                // Pak de URL van het eerste (laatste) item
+                // Probeer verschillende selectors voor RSS items
+                let items = xmlDoc.querySelectorAll('item');
+                if (items.length === 0) {
+                    items = xmlDoc.querySelectorAll('entry'); // Voor Atom feeds
+                }
+                
+                console.log(`Gevonden items: ${items.length}`);
+                
+                if (items.length === 0) {
+                    // Debug info tonen
+                    console.log('XML structuur:', xmlDoc.documentElement?.tagName);
+                    console.log('Alle tags:', Array.from(xmlDoc.querySelectorAll('*')).map(el => el.tagName));
+                    throw new Error('Geen RSS items gevonden. Check console voor debug info.');
+                }
+                
+                // Pak de URL van het eerste item
                 const latestItem = items[0];
-                const link = latestItem.querySelector('link')?.textContent;
+                let link = latestItem.querySelector('link')?.textContent?.trim();
+                
+                // Voor Atom feeds
+                if (!link) {
+                    const linkEl = latestItem.querySelector('link[href]');
+                    link = linkEl?.getAttribute('href');
+                }
+                
+                console.log('Gevonden link:', link);
                 
                 if (!link) {
                     throw new Error('Geen URL gevonden voor het laatste artikel');
@@ -115,6 +168,9 @@
                 document.getElementById('content').innerHTML = `
                     <div class="error">
                         ❌ Fout: ${error.message}
+                        <br><br>
+                        <strong>Debug info:</strong><br>
+                        Check browser console voor meer details
                         <br>
                         <button class="retry-btn" onclick="redirectToLatestItem()">
                             Probeer opnieuw
